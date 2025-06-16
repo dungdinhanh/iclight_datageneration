@@ -552,7 +552,14 @@ def main():
 
     os.makedirs(source_folder, exist_ok=True)
 
-
+    
+    def is_valid_image(path):
+        try:
+            with Image.open(path) as img:
+                img.verify()
+            return True
+        except Exception:
+            return False
     # Collect all results
     all_results = []
 
@@ -563,14 +570,47 @@ def main():
         paths = batch["path"]
         seeds = [random.randint(0, 999999) for _ in range(len(prompts))]
 
+        # Determine which items to process
+        to_process_indices = []
+        result_paths = []
+        bg_paths = []
+
+        for i, original_path in enumerate(paths):
+            filename = os.path.basename(original_path)
+            name, ext = os.path.splitext(filename)
+
+            result_path = os.path.join(source_folder, filename)
+            bg_filename = f"{name}_bg{ext}"
+            bg_path = os.path.join(source_folder, bg_filename)
+
+            result_paths.append(result_path)
+            bg_paths.append(bg_path)
+
+            if is_valid_image(result_path) and is_valid_image(bg_path):
+                print(f"Skipping existing and valid result+bg: {filename}")
+                continue
+
+            to_process_indices.append(i)
+
+        # If all items are already processed, skip this batch
+        if not to_process_indices:
+            continue
+
+        # Filter items that need processing
+        filtered_fgs = input_fgs[to_process_indices]
+        filtered_bgs = input_bgs[to_process_indices]
+        filtered_prompts = [prompts[i] for i in to_process_indices]
+        filtered_seeds = [seeds[i] for i in to_process_indices]
+        filtered_paths = [paths[i] for i in to_process_indices]
+
         results, extras = process_relight_batch(
-            input_fgs=input_fgs,
-            input_bgs=input_bgs,
-            prompts=prompts,
+            input_fgs=filtered_fgs,
+            input_bgs=filtered_bgs,
+            prompts=filtered_prompts,
             image_width=image_width,
             image_height=image_height,
             num_samples=num_samples,
-            seeds=seeds,
+            seeds=filtered_seeds,
             steps=steps,
             a_prompt=a_prompt,
             n_prompt=n_prompt,
@@ -580,7 +620,7 @@ def main():
             bg_source=bg_source
         )
 
-        for result_img, bg_img, original_path in zip(results, input_bgs, paths):
+        for result_img, bg_img, original_path in zip(results, filtered_bgs, filtered_paths):
             # filename = os.path.basename(original_path)
             filename = os.path.basename(original_path)
             name, ext = os.path.splitext(filename)
@@ -593,6 +633,7 @@ def main():
             bg_filename = f"{name}_bg{ext}"
             bg_path = os.path.join(source_folder, bg_filename)
             Image.fromarray(bg_img).save(bg_path)
+        accelerator.wait_for_everyone()
 
     
 if __name__ == "__main__":
