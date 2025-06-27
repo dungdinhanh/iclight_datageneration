@@ -471,7 +471,7 @@ def main():
     metadata_csv = "/home/ubuntu/data/ldm_random_crop.myntra40k_amz67k.cleaned_no_whbg.biref.v1.1.rm_whitemargin/record_v1.csv"
     image_folder = "/home/ubuntu/data/ldm_random_crop.myntra40k_amz67k.cleaned_no_whbg.biref.v1.1.rm_whitemargin/images"
     mask_folder = "/home/ubuntu/data/ldm_random_crop.myntra40k_amz67k.cleaned_no_whbg.biref.v1.1.rm_whitemargin/images"
-    source_folder = "/home/ubuntu/data/ldm_random_crop.myntra40k_amz67k.cleaned_no_whbg.biref.v1.1.rm_whitemargin/images_source2/"
+    source_folder = "/home/ubuntu/data/ldm_random_crop.myntra40k_amz67k.cleaned_no_whbg.biref.v1.1.rm_whitemargin/images_source/"
 
     image_paths, mask_paths = load_image_and_mask_paths_from_metadata(
         metadata_csv=metadata_csv,
